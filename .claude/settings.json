@@ -1,15 +1,17 @@
 {
-  "alwaysAllowTools": [
-    "Bash",
-    "Read",
-    "Write",
-    "Edit",
-    "Glob",
-    "Grep",
-    "Task",
-    "WebFetch",
-    "WebSearch"
-  ],
-  "alwaysAllowMcpTools": true,
-  "enabledSkills": []
+  "tools": {
+    "run": {
+      "blocked_commands": [
+        "rm",
+        "rm -rf",
+        "sudo",
+        "shutdown",
+        "reboot",
+        "mkfs",
+        "dd",
+        "chmod 777",
+        "chown root"
+      ]
+    }
+  }
 }
