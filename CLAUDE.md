@@ -1,7 +1,7 @@
 # プロジェクト基本情報
 
 このプロジェクトは Python (uv) と Streamlit を使用した Web アプリケーションのプロトタイプです。
-高速なビルドと実行を優先し、テストコード（pytest等）は含めない運用とします。
+高速なビルドと実行を優先します。テストコード（pytest等）はその都度運用します。
 
 # 共通コマンド
 
@@ -22,6 +22,10 @@
 - パッケージ管理はすべて `uv` で完結させ、`requirements.txt` は使用しない
 - 画面の「Always rerun」を有効にし、ライブプレビューで開発を進める
 - エラー時は Streamlit のスタックトレースを読み、即座に修正・リロードを行う
+
+# Context7による外部コンテキスト注入
+
+- Always use Context7 MCP when I need library/API documentation, code generation, setup or configuration steps without me having to explicitly ask.
 
 # 重要な制約
 
