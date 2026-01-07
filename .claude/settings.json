@@ -1,0 +1,15 @@
+{
+  "alwaysAllowTools": [
+    "Bash",
+    "Read",
+    "Write",
+    "Edit",
+    "Glob",
+    "Grep",
+    "Task",
+    "WebFetch",
+    "WebSearch"
+  ],
+  "alwaysAllowMcpTools": true,
+  "enabledSkills": []
+}
