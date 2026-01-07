@@ -141,3 +141,49 @@ src/app/frontend：streamlit
 src/app/backend：fastapi
 とします
 ```
+
+```sh
+git worktree add ../backend-stub -b feature/backend-stub-task
+
+git worktree add ../backend-fastapi -b feature/backend-fastapi-task
+
+git worktree add ../frontend-streamlit -b feature/frontend-streamlit-task
+
+git worktree add ../frontend-uiux -b feature/frontend-uiux-task
+
+
+cd ../backend-stub && claude
+
+cd ../backend-fastapi && claude
+
+cd ../frontend-streamlit && claude
+
+cd ../frontend-uiux && claude
+```
+
+並列実行
+```sh
+ /subagent-fastapi
+@documents/tasks/backend/db-api-stub.md
+
+
+/subagent-fastapi
+@documents/tasks/backend/first-fastapi.md
+
+/subagent-streamlit.md
+@documents/tasks/frontend/first-streamlit.md 
+
+
+/subagent-streamlit.md
+@documents/tasks/frontend/ui-ux.md
+```
+
+スタブ作成タスク
+git worktree add ../backend-stub -b feature/backend-stub-task
+ →ドキュメントを見ながら実装はしてくれていた
+git worktree add ../backend-fastapi -b feature/backend-fastapi-task　
+→　ドキュメントを見ながら実装はしてくれていた。ランニングはできなかった。
+git worktree add ../frontend-streamlit -b feature/frontend-streamlit-task　
+→　streamlit-python-expertエージェントを起動してPhase 1の実装　はしてくれた
+git worktree add ../frontend-uiux -b feature/frontend-uiux-task　
+→　uiuxにかかるstreamlitコードがない状態で実装した。エラーが多かった。
