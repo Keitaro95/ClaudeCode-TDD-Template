@@ -1,33 +1,29 @@
-# CLAUDE.md - プロジェクト固有の情報
+# プロジェクト基本情報
 
-## プロジェクト概要
+このプロジェクトは Python (uv) と Streamlit を使用した Web アプリケーションのプロトタイプです。
+高速なビルドと実行を優先し、テストコード（pytest等）は含めない運用とします。
 
-このプロジェクトは、スライドPDFから要件定義書を生成し、Claude Codeを活用して開発を進めるプロジェクトです。
+# 共通コマンド
 
-## プロジェクト構成
+- `uv run streamlit run app.py`: アプリケーションの起動
+- `uv add <package>`: 新規パッケージの追加
+- `uv run python <script>.py`: スクリプトの直接実行
+- `uv fmt`: コードフォーマットの適用（black互換）
 
-- `SourcePDF/`: スライドPDFの格納場所
-- `documents/`: OCR出力、要件定義書、タスク一覧などのドキュメント
-- `.claude/agents/`: ドメインごとのサブエージェント定義
-- `.claude/commands/`: カスタムスラッシュコマンド
-- `.claude/settings.json`: ツール許可設定
-- `.mcp.json`: MCPサーバー設定
+# コードスタイル
 
-## ワークフロー
+- `st.session_state` を活用したシンプルな状態管理
+- UIコンポーネントは `with st.sidebar:` 等を使って構造化する
+- 変数名は `snake_case` で統一し、型ヒントは必要最小限に留める
+- ロジックは別ファイルの関数として切り出し、`app.py` は表示に専念させる
 
-1. OCR文字起こし: `SourcePDF/slides.pdf` → `documents/ocrOutput.md`
-2. 要件定義書作成: `documents/ocrOutput.md` → `documents/requirements.md`
-3. サブエージェント生成: `documents/requirements.md` → `.claude/agents/*.md`
-4. 開発実装
+# ワークフロー
 
-## 使用技術・ツール
+- パッケージ管理はすべて `uv` で完結させ、`requirements.txt` は使用しない
+- 画面の「Always rerun」を有効にし、ライブプレビューで開発を進める
+- エラー時は Streamlit のスタックトレースを読み、即座に修正・リロードを行う
 
-- Claude Code
-- Context7 (MCP)
-- Playwright (E2Eテスト用MCP)
-- Git worktree
+# 重要な制約
 
-## 参考リンク
-
-- スライド: https://docs.google.com/presentation/d/1SlKDv_NDMpav4LmQy-CVfrKTr3NbImc_HAltAFkj2iM/edit
-- リポジトリ: https://github.com/AFG-Inc/cosmo-ir-2026
+**重要**: Streamlit の再実行特性を考慮し、データの読み込みや重い計算には必ず `@st.cache_data` を使用してください。
+**必須**: プロトタイプですが、APIキー等の秘密情報は `.env` または `streamlit secrets` を使用し、ハードコードを避けてください。
