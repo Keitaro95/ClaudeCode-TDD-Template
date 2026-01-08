@@ -1,189 +1,269 @@
-## 前提条件
+## TDDについてt-wadaの記事
 
-Slideの大体の方針をOCRで組んで  
-Claude Codeで要件定義書生成（型にはめなくていい）  
-→手を動かしながらClaude Code動かしてどうなるか確かめてみる  
-一旦自由にやってみて、どこまで広がりが出るか
+[https://t-wada.hatenablog.jp/entry/canon-tdd-by-kent-beck](https://t-wada.hatenablog.jp/entry/canon-tdd-by-kent-beck)  
 
-[https://docs.google.com/presentation/d/1SlKDv\_NDMpav4LmQy-CVfrKTr3NbImc\_HAltAFkj2iM/edit?slide=id.g3b4e0e84a11\_2\_359\#slide=id.g3b4e0e84a11\_2\_359](https://docs.google.com/presentation/d/1SlKDv_NDMpav4LmQy-CVfrKTr3NbImc_HAltAFkj2iM/edit?slide=id.g3b4e0e84a11_2_359#slide=id.g3b4e0e84a11_2_359)  
-スライド1\~17(事前準備ツールは無視)
+1. 網羅したいテストシナリオのリスト（テストリスト）を書く  
+2. テストリストの中から「ひとつだけ」選び出し、実際に、具体的で、実行可能なテストコードに翻訳し、テストが失敗することを確認する red  
+3. プロダクトコードを変更し、いま書いたテスト（と、それまでに書いたすべてのテスト）を成功させる（その過程で気づいたことはテストリストに追加する）green  
+4. 必要に応じてリファクタリングを行い、実装の設計を改善する blue  
+5. テストリストが空になるまでステップ2に戻って繰り返す
 
-前提条件
+### **概要**
 
-* md共有してcontextで  
-* /commands  
-* /settings.json で  
-* git worktree  
-* playwrite MCPで動かしてUIテスト。ブラウザを立ち上げてuser環境を再現。  
-  * e2eでテスト。これもできるように。  
-  * [https://tech-lab.sios.jp/archives/50319](https://tech-lab.sios.jp/archives/50319)  
-* Context7で外部コンテキストを注入する  
-  * [https://zenn.dev/aprender/articles/8098609d599215](https://zenn.dev/aprender/articles/8098609d599215)  
-* [https://github.com/AFG-Inc/cosmo-ir-2026](https://github.com/AFG-Inc/cosmo-ir-2026) 
+テスト駆動開発（TDD: Test-Driven Development）はプログラミングのワークフローだ。あるプログラマが、あるシステム（まだ無いかもしれないが）の振る舞いを変更する必要があるとする。TDDの狙いは、そのプログラマを支援して、システムを下記のような新たな状態に導くことだ。
 
-## 方針
+* それまで動作していたものは引き続き全て動作する  
+* 新しい振る舞いは期待通りに動作する  
+* システムはさらなる変更の準備ができている  
+* プログラマとその同僚は、上記の点に自信を持っている
 
-### OCR文字起こし
+### インターフェイスと実装の分離
 
-.claude/skills/pdf-ocr-skill.mdにOCRのAgent Skillsを登録しました。
+設計には2種類ある。
 
-「pdf-ocr」スキルを使って、cosmo-ir-slides.pdf の OCR を実行してください  
-実行結果は　./documents/ocrOutput.md　にライティングしてください
+* 物理設計・インターフェイス  
+  * システムはその振る舞いをどう実装するべきかの設計=設計書・dbスキーマなどのスキーマ  
+* 論理設計・実装  
+  * ある**振る舞い**はどのように呼び出されるべきかの設計＝**TDD**
 
-### 要件定義md作成
+### **ステップ1. テストリスト**
 
-要件定義書のテンプレを与えて、テンプレの通り作らせてみます
+テストには実装したいコードの**振る舞い**を記述する。  
+コードが期待する動作をリストアップする。  
+「正常系はこうで、もしもサービスがタイムアウトしたらこうして、データベースにキーがまだないときはこうする。あとは……」
 
-./documents/[ocrOutput.md](http://ocrOutput.md)　は今回のPJの骨子です。  
-SourceSample/[requirements-sample.md](http://requirements-sample.md) は要件定義のサンプルです。  
-足りないものがあったら、Claudeから質問を投げてください  
-より精度の高い定義書を作りましょう。  
-要件定義書は　./documents/requirements.md　に書いてください。
+コード変更後、満たすべき振る舞い・様々な動作を網羅的に考えよう。  
+同時に、振る舞いの変更が既存の動作を壊さないようにもする。  
+それらをテストリストに追加する。
 
-### 要件定義からsubagent .md を生成する
+NG: 実装の設計判断を混ぜ込んでしまうこと。テスト駆動開発は設計を担当しない。設計がある状態でTDDするのが望ましい。
 
-```sh
-要件定義書はdocuments/[requirements.md](http://requirements.md)に作りました。  
-これを読んで、個別のドメインごとにランニングさせるサブエージェントを複数作ってください。  
-\#\#作り方の手順  
-\#\#\#1要件定義書から、ドメインを分割する。  
-fastapiならfastapiドメイン   
-streamlitならstreamlitドメイン  
-その他、  
-このようにドメインに応じた専門性でサブエージェントを立ててください。  
-mdファイル生成の際は、私に確認をとってください。
+### **ステップ2. 失敗するテストをひとつ書く red code**
 
-\#\#\#2 実装担当のsubagent.mdの書き方は以下のようになる  
-場所：ファイル名称はこのように書く　.claude/agents/{domain}-{language}-expert.md   
-{domain}は担当ドメイン名　{language}は使用する言語やフレームワーク
+テストをひとつ。準備と実行と検証（アサーション）が備わった、本当の本当に自動化されたテストを「ひとつだけ」書く
 
-\#\#\#3template：以下は .claude/agents/[fastapi-python-expert.md](http://fastapi-python-expert.md) の例です。  
-実装担当のsubagentを作る際はこの例を使って書いてください。
+assertErrorを吐くコードを書く
 
-| .claude/agents/fastapi-python-expert.md \--- name: fastapi-python-expert description: Use this agent when you need to design, implement, or optimize FastAPI backend applications. This includes API endpoint creation, database … model: sonnet color: cyan \--- \*\*always ultrathink\*\* あなたは FastAPI を使用した Python バックエンド開発のエキスパートです。FastAPI フレームワークの深い知識、クラウドアーキテクチャ、ビジネスロジックの実装において豊富な経験を持っています。 \#\# コーディング規約 \#\# パッケージ管理 \#\# git 管理 \#\# コメント・ドキュメント方針 \#\# プロジェクト構造 \#\# 開発ガイドライン \#\# あなたの専門分野 \#\# 問題解決アプローチ |
-| :---- |
+（テストコードをアサーションから書き始めて、上に向かって逆向きに書き進めてみるやり方もある）
+
+NG: コードカバレッジを上げるためだけに、アサーションのないテストコードを書いてしまうこと。
+
+NG: テストリスト*すべてを*具体的なテストコードに翻訳してから、ひとつずつテストを成功させようとしてしまうこと。まず一つだけテストコード、その後greenコード、のように実装する。
+
+テストリストから次に書くテスト項目をひとつ選び出すのは重要なスキル。  
+それは経験によってのみ得られるものだ。  
+テストを選ぶ順番は、プログラミングの快適さと最終的な成果の両方に重大な影響を及ぼす。  
+テストを適切な順番に実行する。これによって、デグレが少ない、制御された実装になる、ということか。
+
+### **ステップ3. テストを成功させるコードを実装する green code**
+
+失敗するテストをひとつ書けたら、今度はテストを成功させるコードを実装する。
+
+NG: アサーションを削除して、テストが成功したふりをしてしまうこと。
+
+NG: テスト対象を実際に動かしたときの値をコピーして、テストコードの中の期待値にペーストしてしまうこと。これではダブルチェックにならず、TDDの妥当性確認（validation）としての価値が台無しになってしまう。
+
+NG: green codeを書くと同時にリファクタリングを混ぜ込んでしまうこと。  
+まずはred codeが通る動くもの、その後リファクタリング。  
+このやりかたが結局は脳にも優しい。
+
+レッド（テスト失敗）からグリーン（テスト成功）にする過程で新しいテストの必要性に気づいたら、それをテストリストに追加する。
+
+もし、green codeを書いていてテストコードに抜け漏れがあると気づいたら、レッドコード初めからやり直すのがおすすめ。
+
+テストが成功したら「済」マークをつけてテストリストから消し込む。
+
+### ステップ4. 必要に応じてリファクタリングを行う blue code
+
+*ここまで来たら、ようやく*実装の設計判断を行えるようになる。
+
+NG: この段階で必要以上に[リファクタリング](https://www.ohmsha.co.jp/book/9784274224546/)してしまうこと。
+
+NG: 早すぎる抽象化。コードに重複があるとしても、重複を無くさなければいけないわけではない。
+
+### ステップ5. テストリストが空になるまでステップ2に戻って繰り返す
+
+コードの動作に対する不安が退屈に変わるまで、テストとコーディングを続ける。
+
+## Claude Code でTDD
+
+TDD原則
+
+* テストファーストを強制する- 失敗するテストの前に実装は存在しない  
+* フェーズを集中させる- テスト作成者は実装の詳細について考えるべきではない  
+* リファクタリングを確実に行う- 機能がすでに動作している場合は簡単にスキップできる
+
+TDDでテストを最初に書く最大のポイントは、実装がまだわからないということです。  
+つまり、red code実装の際は、すでに計画している実装を見せないということです。  
+こうして、意図しない「ズル」を防ぎます。
+
+### テスト作成用Skills, Subagent
+
+テスト作成用Skills, Subagentを立てる。  
+これにより独立したコンテキストでテスト作成できます。  
+機能実装のコンテキストを与えないため。  
+これにより、red code実装フェーズは完全に独立して実行されます。  
+実装者は失敗したテストだけを見ることができます。
+
+### TDD skill.md
+
+.claude/skills/tdd-integration/skill.md  
+[https://alexop.dev/posts/custom-tdd-workflow-claude-code-vue/\#the-tdd-skill](https://alexop.dev/posts/custom-tdd-workflow-claude-code-vue/#the-tdd-skill) 
+
+このdescriptionフィールドにはトリガーフレーズが含まれている。  
+新しいfeatureやfunctionを実装するように指示すると、クロードは自動的にこのスキルを起動します。
+
+```sh  
+次の3つのphaseに従って新しい機能を実装してください。  
+フェーズをスキップしないでください  
+🔴 RED PHASE: Delegating to tdd-test-writer...  
+Invoke the \`tdd-test-writer\` subagent with: tdd-test-writerサブエージェントを起動
+
+\*\*Do NOT proceed to Green phase until test failure is confirmed.\*\*
+
+🟢 GREEN PHASE: Delegating to tdd-implementer...  
+Invoke the \`tdd-implementer\` subagent with:　tdd-implementerサブエージェントを起動
+
+\*\*Do NOT proceed to Refactor phase until test passes.\*\*
+
+🔵 REFACTOR PHASE: Delegating to tdd-refactorer...  
+Invoke the \`tdd-refactorer\` subagent with:　tdd-refactorerサブエージェントを起動
+
+\*\*Cycle complete when refactor phase returns.\*\*  
 ```
 
-2-2クオリティチェック担当のsubagentは作成済み.agents/quality-check-exprert.md
+各フェーズには「…まで先に進まないでください」という明確なゲートがある。  
+🔴🟢🔵の絵文字のおかげで、出力で進捗状況を簡単に把握できます。
 
-### その他設定ファイル 
+### red code 実装 subagent
 
-[CLAUDE.md](http://CLAUDE.md)：プロジェクト固有の情報
+[https://alexop.dev/posts/custom-tdd-workflow-claude-code-vue/\#the-test-writer-agent-red-phase](https://alexop.dev/posts/custom-tdd-workflow-claude-code-vue/#the-test-writer-agent-red-phase)  
+.claude/agents/tdd-test-writer.md:  
+test code exampleを載せてる  
+Use \`createTestApp()\` for full app integration  
+これは[テスト用のhelper関数](https://alexop.dev/posts/custom-tdd-workflow-claude-code-vue/#the-test-helper)。作者が用意したもの。　
 
-| \# プロジェクト基本情報 このプロジェクトは Python (uv) と Streamlit を使用した Web アプリケーションのプロトタイプです。 高速なビルドと実行を優先し、テストコード（pytest等）は含めない運用とします。 \# 共通コマンド \- \`uv run streamlit run app.py\`: アプリケーションの起動 \- \`uv add \<package\>\`: 新規パッケージの追加 \- \`uv run python \<script\>.py\`: スクリプトの直接実行 \- \`uv fmt\`: コードフォーマットの適用（black互換） \# コードスタイル \- \`st.session\_state\` を活用したシンプルな状態管理 \- UIコンポーネントは \`with st.sidebar:\` 等を使って構造化する \- 変数名は \`snake\_case\` で統一し、型ヒントは必要最小限に留める \- ロジックは別ファイルの関数として切り出し、\`app.py\` は表示に専念させる \# ワークフロー \- パッケージ管理はすべて \`uv\` で完結させ、\`requirements.txt\` は使用しない \- 画面の「Always rerun」を有効にし、ライブプレビューで開発を進める \- エラー時は Streamlit のスタックトレースを読み、即座に修正・リロードを行う \# 重要な制約 \*\*重要\*\*: Streamlit の再実行特性を考慮し、データの読み込みや重い計算には必ず \`@st.cache\_data\` を使用してください。 \*\*必須\*\*: プロトタイプですが、APIキー等の秘密情報は \`.env\` または \`streamlit secrets\` を使用し、ハードコードを避けてください。 |
-| :---- |
+### green code 実装 subagent
 
-### 
+[https://alexop.dev/posts/custom-tdd-workflow-claude-code-vue/\#the-implementer-agent-green-phase](https://alexop.dev/posts/custom-tdd-workflow-claude-code-vue/#the-implementer-agent-green-phase)  
+.claude/agents/tdd-style-subagents/tdd-implementer.md  
+テストに通過するためだけの最小限の実装をしてください、と書いてる。  
+そのほか、手順と原則。
 
-### /commands　配下にmdを書く。
-```sh
-subagentファイルは.claude/agents/{domain}-{language}-expert.md   
-に作りました。これを読んで、個別のドメインごとにランニングさせるカスタムコマンドmdを複数作ってください。
+### blue code 実装 subagent
 
-\#\#作り方の手順  
-\#\#\#1 実装担当の.claude/agents/{domain}-{language}-expert.md があります。  
-これを実行するカスタムコマンドファイルを場所に作ってください  
-場所：ファイル名称はこのように書く　.claude/commands/subagent-{domain}.md   
-ここの{domain}は.claude/agents/{domain}-{language}-expert.md　にあるドメイン名です
+[https://alexop.dev/posts/custom-tdd-workflow-claude-code-vue/\#the-refactorer-agent-refactor-phase](https://alexop.dev/posts/custom-tdd-workflow-claude-code-vue/#the-refactorer-agent-refactor-phase)  
+.claude/agents/tdd-refactorer.md:  
+テストコードをみて、実装リファクタリングをしてください　と書いてる
 
-\#\#\#3template：カスタムコマンド用subagentを作る際はこの例を使って書いてください。  
-以下は  .claude/commands/subagent-fastapi.md の例です。  
-\#\#\#\#template構成の留意  
-description: カスタムコマンドの説明  
-ultrathinkをつける。  
-Context7で外部ライブラリのコンテキストを注入できるようにmdにも書いておく  
-(後ほどContext7でmcpサーバーを立てる予定です)
+* 必要以上のリファクタリング  
+* 早すぎる抽象化  
+* コードに重複があるとしても、重複を無くさなければいけないわけではない
 
-| \# .claude/commands/subagent-fastapi.md \--- description: FastAPIの実装タスクを、Context7でコンテキストを取得しつつ、実装とレビューのループで完遂します。 \--- \*\*ultrathink\*\* 指定されたタスクに対して、以下の手順で進めてください。 各ステップでは、必要に応じて MCP サーバー \`context7\`（\`use\_context7\` 等のツール）を呼び出し、プロジェクトの最新の構造や依存関係を正確に把握した上で実行してください。 1\. \*\*プロジェクトコンテキストの把握\*\* \- \`context7\` を使用して、関連するファイル、関数、クラスの定義を読み取る \- 現在の実装状況を詳細に理解し、タスクの修正範囲を特定する 2\. \*\*機能実装（fastapi-python-expert）\*\* \- 必ず \`fastapi-python-expert\` エージェントを起動して実装を行う \- \`context7\` から得た情報を元に、既存のコードと整合性の取れた実装を行う \- テストが通過するまで、または要件を満たすまでこのステップを繰り返す 3\. \*\*品質検証（quality-check-expert）\*\* \- 必ず \`quality-check-expert\` エージェントを起動してレビューを行う \- 実装内容に抜け漏れがないか、\`context7\` で確認できる他のファイルへの影響（破壊的変更）がないか徹底的にチェックする \- 問題があればステップ 2 に戻り、すべてのレビューをクリアするまでループする |
-| :---- |
+ことを盛り込んだ方が良さそう。
+
+### テスト用skillmdを確実にアクティブにするためにhookを使う→これは毎回実行されてしまうので、なし、/skillmd指定して名指しで起こせばいい。
+
+.claude/settings.jsonにhookを設定
+**UserPromptSubmit：「送信ボタンを押した直後」npx コマンドを実行。**
+(スクリプトは.claude/hooks/user-prompt-skill-eval.tsに書いてる)
+このフックにより、スキルのアクティベーションが約20%から約84%に飛躍的に向上しました。
+```json
+{
+  "hooks": {
+    **"UserPromptSubmit": \[**
+      {
+        "matcher": "",
+        "hooks": \[
+          {
+            "type": "command",
+            **"command": "npx tsx \\"$CLAUDE\_PROJECT\_DIR/.claude/hooks/user-prompt-skill-eval.py\\"",**
+            "timeout": 5
+          }
+        \]
+      }
+    \]
+  }
+}
+```
+---
+
+## このリポジトリの実装例
+
+このリポジトリでは、上記のTDD原則に基づいたClaude Code開発環境が実装済みです。
+
+### TDD用エージェント（Subagent）
+
+3つのフェーズに対応したサブエージェントを用意しています：
+
+#### 1. RED Phase: テスト作成エージェント
+**ファイル**: [.claude/agents/tdd-style-subagents/tdd-test-writer-red.md](.claude/agents/tdd-style-subagents/tdd-test-writer-red.md)
+
+- 失敗するテストを書くことに特化
+- `tests/` 配下に統合テストを作成
+- テストが**必ず失敗すること**を確認してから完了
+- 実装の詳細を知らない状態でテストを書く
+
+#### 2. GREEN Phase: 実装エージェント
+**ファイル**: [.claude/agents/tdd-style-subagents/tdd-implementer-green.md](.claude/agents/tdd-style-subagents/tdd-implementer-green.md)
+
+- テストを通過させる最小限の実装のみを行う
+- テストが**すべて通過すること**を確認してから完了
+- リファクタリングは行わない（次フェーズに委ねる）
+
+#### 3. BLUE Phase: リファクタリングエージェント
+**ファイル**: [.claude/agents/tdd-style-subagents/tdd-refactorer-blue.md](.claude/agents/tdd-style-subagents/tdd-refactorer-blue.md)
+
+- テストが通った状態で、コードの品質を向上
+- 早すぎる抽象化を避ける
+- 必要最小限のリファクタリングのみ実施
+
+### TDD統合スキル
+
+**ファイル**: [.claude/skills/tdd-integration/skill.md](.claude/skills/tdd-integration/skill.md)
+
+3つのフェーズを順番に実行するワークフローを自動化：
+
+```
+🔴 RED → 🟢 GREEN → 🔵 REFACTOR
 ```
 
-### .claude/settings.json
+各フェーズには明確なゲートがあり、前のフェーズが完了するまで次に進みません。
 
-blocked\_commands を追加
+### テスト用ヘルパー関数
 
-### Context7 ＝ MCPサーバーを立てる 
+**ファイル**: [tests/frontend/helpers.py](tests/frontend/helpers.py)
 
- .mcp.json  
-外部APIキーが必要なので割愛
+Streamlit AppTestを使った統合テストを簡単に記述するためのヘルパー関数を提供：
 
-### worktreeに分割する 16時
+- `create_streamlit_runner()`: Streamlitアプリの初期化とモック設定
+- `mock_backend_api()`: FastAPIバックエンドのモック化
+- `mock_azure_speech_result()`: Azure Speech Serviceのモック化
 
-### terminalで実行する 17時
-
-### playwrite \= npx版　MCPサーバーを立てる 明日想定
-
-### ディレクトリ
-
-SourcePDF/slides.pdf  
-documents/ocrOutput.md  
-documents/requirements.md  
-documents/\~\*.md：タスク一覧
-
-CLAUDE.md：プロジェクト固有の情報  
-.claude/agents/：サブエージェント。実装ガイドライン。コード規約など。
-
-.claude/commands/：カスタムスラッシュコマンド  
-.claude/settings.json：ツール許可設定  
-.mcp.json：MCP サーバー設定
-
-## 情報集
-
-[Databricks Apps(Streamlit)からLangChainモデルをストリーミング呼び出しする \- Qiita](https://qiita.com/taka_yayoi/items/5b31bb8a079623de84ec)
-
-## Log
-
-### 1/7 
-```sh
-@documents/tasks/fileArch.md にはファイルアーキテクチャを書いてね。 コンテキストは @documents/requirements.md 
-ただし、根本的には
-src/app/frontend：streamlit
-src/app/backend：fastapi
-とします
+**使用例**:
+```python
+def test_operator_button(mocker):
+    mocker.patch("requests.post", return_value=mock_backend_api())
+    at = create_streamlit_runner("src/frontend/app/pages/1_operator_app.py")
+    at.button[0].click().run()
+    assert "expected text" in at.text_area[0].value
 ```
 
-```sh
-git worktree add ../backend-stub -b feature/backend-stub-task
+### 使い方
 
-git worktree add ../backend-fastapi -b feature/backend-fastapi-task
+1. **新機能を実装する場合**:
+   ```
+   /tdd-integration を使って〇〇機能を実装してください
+   ```
 
-git worktree add ../frontend-streamlit -b feature/frontend-streamlit-task
+2. **各フェーズを個別に実行する場合**:
+   - RED: `tdd-test-writer` エージェントを起動
+   - GREEN: `tdd-implementer` エージェントを起動
+   - BLUE: `tdd-refactorer` エージェントを起動
 
-git worktree add ../frontend-uiux -b feature/frontend-uiux-task
+3. **テストヘルパーを使う場合**:
+   ```python
+   from tests.frontend.helpers import create_streamlit_runner, mock_backend_api
+   ```
 
-
-cd ../backend-stub && claude
-
-cd ../backend-fastapi && claude
-
-cd ../frontend-streamlit && claude
-
-cd ../frontend-uiux && claude
-```
-
-並列実行
-```sh
- /subagent-fastapi
-@documents/tasks/backend/db-api-stub.md
-
-
-/subagent-fastapi
-@documents/tasks/backend/first-fastapi.md
-
-/subagent-streamlit.md
-@documents/tasks/frontend/first-streamlit.md 
-
-
-/subagent-streamlit.md
-@documents/tasks/frontend/ui-ux.md
-```
-
-スタブ作成タスク
-git worktree add ../backend-stub -b feature/backend-stub-task
- →ドキュメントを見ながら実装はしてくれていた
-git worktree add ../backend-fastapi -b feature/backend-fastapi-task　
-→　ドキュメントを見ながら実装はしてくれていた。ランニングはできなかった。
-git worktree add ../frontend-streamlit -b feature/frontend-streamlit-task　
-→　streamlit-python-expertエージェントを起動してPhase 1の実装　はしてくれた
-git worktree add ../frontend-uiux -b feature/frontend-uiux-task　
-→　uiuxにかかるstreamlitコードがない状態で実装した。エラーが多かった。
+このテンプレートを使うことで、TDDの原則に従った堅牢な開発が可能になります。
