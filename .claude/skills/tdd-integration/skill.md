@@ -1,4 +1,4 @@
-.claude/skills/tdd-integration/skill.md
+
 https://alexop.dev/posts/custom-tdd-workflow-claude-code-vue/#the-tdd-skill 
 
 このdescriptionフィールドにはトリガーフレーズが含まれている。
