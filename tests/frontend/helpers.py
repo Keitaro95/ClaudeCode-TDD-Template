@@ -5,7 +5,7 @@ Streamlit AppTest ヘルパー関数
 """
 
 from streamlit.testing.v1 import AppTest
-from unittest.mock import MagicMock, patch
+from typing import Any
 import sys
 import os
 
@@ -23,7 +23,8 @@ def create_streamlit_runner(page_path: str) -> AppTest:
         AppTest: 初期化済みのAppTestインスタンス
 
     使用例:
-        def test_operator_button():
+        def test_operator_button(mocker):
+            mocker.patch("requests.post", return_value=mock_backend_api())
             at = create_streamlit_runner("src/frontend/app/pages/1_operator_app.py")
             at.button[0].click().run()
             assert "expected text" in at.text_area[0].value
@@ -32,6 +33,8 @@ def create_streamlit_runner(page_path: str) -> AppTest:
     os.environ["BACKEND_URL"] = "http://test:8000"
 
     # 2. Azure SDKをモック化（conftest.pyで既にモックされているが、念のため）
+    from unittest.mock import MagicMock
+
     mock_speech = MagicMock()
     mock_recognizer = MagicMock()
     mock_result = MagicMock()
@@ -51,7 +54,7 @@ def mock_backend_api(
     summary: str = "これはテスト要約です。",
     detail: str = "これはテスト詳細回答です。より長い説明がここに入ります。",
     status_code: int = 200
-) -> MagicMock:
+) -> Any:
     """
     FastAPI バックエンドへのHTTPリクエストをモック化する。
     requests.post や httpx などのライブラリをモックする。
@@ -62,13 +65,15 @@ def mock_backend_api(
         status_code: HTTPステータスコード
 
     Returns:
-        MagicMock: モックされたレスポンスオブジェクト
+        Mock: モックされたレスポンスオブジェクト
 
     使用例:
-        with patch("requests.post", return_value=mock_backend_api()):
+        def test_api_call(mocker):
+            mocker.patch("requests.post", return_value=mock_backend_api())
             # テスト処理
-            pass
     """
+    from unittest.mock import MagicMock
+
     mock_response = MagicMock()
     mock_response.status_code = status_code
     mock_response.json.return_value = {
@@ -86,9 +91,12 @@ def mock_azure_speech_result(text: str = "テスト音声認識結果") -> None:
         text: モックする音声認識結果のテキスト
 
     使用例:
-        mock_azure_speech_result("カスタム音声結果")
-        # この後のテストでは指定したテキストが返される
+        def test_speech_recognition():
+            mock_azure_speech_result("カスタム音声結果")
+            # この後のテストでは指定したテキストが返される
     """
+    from unittest.mock import MagicMock
+
     mock_speech = MagicMock()
     mock_recognizer = MagicMock()
     mock_result = MagicMock()
