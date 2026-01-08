@@ -16,18 +16,18 @@
 cosmo-ir-2026/
 ├── src/
 │   ├── frontend/
-│   │   ├── officer_app.py          # 役員画面（文字サイズ調整、質問・回答表示、要約/詳細タブ）
-│   │   └── operator_app.py         # オペレータ画面（音声認識、RAG回答生成、回答送信）
+│   │   └── app/
+│   │       ├── main.py                    # エントリーポイント（入り口）
+│   │       └── pages/                     # ここに画面ごとのファイルを置く
+│   │           ├── 1_operator_app.py      # オペレータ画面
+│   │           └── 2_officer_app.py       # 役員画面
 │   │
 │   └── backend/
-│       ├── main.py                 # FastAPI エントリポイント
-│       ├── api/
-│       │   ├── speech.py           # 音声認識エンドポイント（Azure Speech / Mock）
-│       │   ├── rag.py              # RAG回答生成エンドポイント（Mock）
-│       │   └── stream.py           # SSE エンドポイント（役員画面への配信）
+│       ├── main.py                        # FastAPI エントリポイント
 │       └── services/
-│           ├── speech_service.py   # Azure Speech Service 連携
-│           └── rag_service.py      # RAG ロジック（Mock返却）
+│           ├── speech.py                  # 音声認識エンドポイント（Mock）
+│           ├── rag.py                     # RAG回答生成エンドポイント（Mock）
+│           └── stream.py                  # SSE エンドポイント（役員画面への配信）
 │
 ├── .env.example                    # 環境変数サンプル
 ├── .gitignore
@@ -43,19 +43,18 @@ cosmo-ir-2026/
 
 | ファイル | 責務 |
 |---------|------|
-| **officer_app.py** | 文字サイズ調整（-/+ボタン）、質問表示、要約/詳細タブ表示 |
-| **operator_app.py** | サイドバー（要約・詳細の文字数設定）、音声認識ボタン、回答生成ボタン、回答送信ボタン |
+| **main.py** | Streamlitアプリケーションのエントリーポイント |
+| **pages/1_operator_app.py** | オペレータ画面（サイドバー：要約・詳細の文字数設定、音声認識ボタン、回答生成ボタン、回答送信ボタン） |
+| **pages/2_officer_app.py** | 役員画面（文字サイズ調整（-/+ボタン）、質問表示、要約/詳細タブ表示） |
 
 ### バックエンド
 
 | ファイル | 責務 |
 |---------|------|
-| **main.py** | FastAPIアプリ初期化、ルーター登録 |
-| **api/speech.py** | `POST /api/speech/recognize` - Azure Speech / Mock で音声認識結果を返却 |
-| **api/rag.py** | `POST /api/rag/answer` - 質問を受け取り、要約・詳細の回答をJSON返却（Mock） |
-| **api/stream.py** | `GET /api/stream/officer` - SSE で役員画面に回答を配信 |
-| **services/speech_service.py** | Azure Speech Service 連携（APIキーなければMock） |
-| **services/rag_service.py** | RAG ロジック（ベクトルDBなければMock） |
+| **main.py** | FastAPIアプリ初期化、サービスルーター登録 |
+| **services/speech.py** | `POST /api/speech/recognize` - Mock音声認識結果を返却 |
+| **services/rag.py** | `POST /api/rag/answer` - 質問を受け取り、要約・詳細の回答をJSON返却（Mock） |
+| **services/stream.py** | `GET /api/stream/officer` - SSE で役員画面に回答を配信 |
 
 ---
 
@@ -68,7 +67,7 @@ cosmo-ir-2026/
   ↓
 POST /api/speech/recognize（Mock音声データ送信）
   ↓
-[Backend: speech_service.py] Azure Speech / Mock
+[Backend: services/speech.py] Mock音声認識
   ↓ SSE
 [オペレータ画面] 文字起こしストリーミング表示
 ```
@@ -80,7 +79,7 @@ POST /api/speech/recognize（Mock音声データ送信）
   ↓
 POST /api/rag/answer（質問テキスト送信）
   ↓
-[Backend: rag_service.py] Mock回答返却（要約・詳細）
+[Backend: services/rag.py] Mock回答返却（要約・詳細）
   ↓
 [オペレータ画面] 回答textboxに表示
   ↓ 回答送信ボタン押下
@@ -123,11 +122,8 @@ BACKEND_URL=http://localhost:8000
 uv run uvicorn src.backend.main:app --reload --port 8000
 
 # フロントエンド起動（別ターミナル）
-# 役員画面
-uv run streamlit run src/frontend/officer_app.py --server.port 8501
-
-# オペレータ画面
-uv run streamlit run src/frontend/operator_app.py --server.port 8502
+# Streamlitマルチページアプリ（オペレータ画面・役員画面）
+uv run streamlit run src/frontend/app/main.py --server.port 8501
 ```
 
 ---
