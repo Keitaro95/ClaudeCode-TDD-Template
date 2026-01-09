@@ -1,3 +1,87 @@
+
+## このリポジトリの実装例
+
+このリポジトリでは、上記のTDD原則に基づいたClaude Code開発環境が実装済みです。
+
+### TDD統合スキル
+
+**ファイル**: [.claude/skills/tdd-integration/skill.md](.claude/skills/tdd-integration/skill.md)
+
+3つのフェーズを順番に実行するワークフローを自動化：
+
+```
+🔴 RED → 🟢 GREEN → 🔵 REFACTOR
+```
+
+各フェーズには明確なゲートがあり、前のフェーズが完了するまで次に進みません。
+
+### TDD用エージェント（Subagent）
+
+3つのフェーズに対応したサブエージェントを用意しています：
+
+#### 1. RED Phase: テスト作成エージェント
+**ファイル**: [.claude/agents/tdd-style-subagents/tdd-test-writer-red.md](.claude/agents/tdd-style-subagents/tdd-test-writer-red.md)
+
+- 失敗するテストを書くことに特化
+- `tests/` 配下に統合テストを作成
+- テストが**必ず失敗すること**を確認してから完了
+- 実装の詳細を知らない状態でテストを書く
+
+#### 2. GREEN Phase: 実装エージェント
+**ファイル**: [.claude/agents/tdd-style-subagents/tdd-implementer-green.md](.claude/agents/tdd-style-subagents/tdd-implementer-green.md)
+
+- テストを通過させる最小限の実装のみを行う
+- テストが**すべて通過すること**を確認してから完了
+- リファクタリングは行わない（次フェーズに委ねる）
+
+#### 3. BLUE Phase: リファクタリングエージェント
+**ファイル**: [.claude/agents/tdd-style-subagents/tdd-refactorer-blue.md](.claude/agents/tdd-style-subagents/tdd-refactorer-blue.md)
+
+- テストが通った状態で、コードの品質を向上
+- 早すぎる抽象化を避ける
+- 必要最小限のリファクタリングのみ実施
+
+
+
+### テスト用ヘルパー関数
+
+**ファイル**: [tests/frontend/helpers.py](tests/frontend/helpers.py)
+
+Streamlit AppTestを使った統合テストを簡単に記述するためのヘルパー関数を提供：
+
+- `create_streamlit_runner()`: Streamlitアプリの初期化とモック設定
+- `mock_backend_api()`: FastAPIバックエンドのモック化
+- `mock_azure_speech_result()`: Azure Speech Serviceのモック化
+
+**使用例**:
+```python
+def test_operator_button(mocker):
+    mocker.patch("requests.post", return_value=mock_backend_api())
+    at = create_streamlit_runner("src/frontend/app/pages/1_operator_app.py")
+    at.button[0].click().run()
+    assert "expected text" in at.text_area[0].value
+```
+
+### 使い方
+
+1. **新機能を実装する場合**:
+   ```
+   /tdd-integration を使って〇〇機能を実装してください
+   ```
+
+2. **各フェーズを個別に実行する場合**:
+   - RED: `tdd-test-writer` エージェントを起動
+   - GREEN: `tdd-implementer` エージェントを起動
+   - BLUE: `tdd-refactorer` エージェントを起動
+
+3. **テストヘルパーを使う場合**:
+   ```python
+   from tests.frontend.helpers import create_streamlit_runner, mock_backend_api
+   ```
+
+このテンプレートを使うことで、TDDの原則に従った堅牢な開発が可能になります。
+
+
 ## TDDについてt-wadaの記事
 
 [https://t-wada.hatenablog.jp/entry/canon-tdd-by-kent-beck](https://t-wada.hatenablog.jp/entry/canon-tdd-by-kent-beck)  
@@ -191,85 +275,3 @@ Use \`createTestApp()\` for full app integration
 }
 ```
 ---
-
-## このリポジトリの実装例
-
-このリポジトリでは、上記のTDD原則に基づいたClaude Code開発環境が実装済みです。
-
-### TDD統合スキル
-
-**ファイル**: [.claude/skills/tdd-integration/skill.md](.claude/skills/tdd-integration/skill.md)
-
-3つのフェーズを順番に実行するワークフローを自動化：
-
-```
-🔴 RED → 🟢 GREEN → 🔵 REFACTOR
-```
-
-各フェーズには明確なゲートがあり、前のフェーズが完了するまで次に進みません。
-
-### TDD用エージェント（Subagent）
-
-3つのフェーズに対応したサブエージェントを用意しています：
-
-#### 1. RED Phase: テスト作成エージェント
-**ファイル**: [.claude/agents/tdd-style-subagents/tdd-test-writer-red.md](.claude/agents/tdd-style-subagents/tdd-test-writer-red.md)
-
-- 失敗するテストを書くことに特化
-- `tests/` 配下に統合テストを作成
-- テストが**必ず失敗すること**を確認してから完了
-- 実装の詳細を知らない状態でテストを書く
-
-#### 2. GREEN Phase: 実装エージェント
-**ファイル**: [.claude/agents/tdd-style-subagents/tdd-implementer-green.md](.claude/agents/tdd-style-subagents/tdd-implementer-green.md)
-
-- テストを通過させる最小限の実装のみを行う
-- テストが**すべて通過すること**を確認してから完了
-- リファクタリングは行わない（次フェーズに委ねる）
-
-#### 3. BLUE Phase: リファクタリングエージェント
-**ファイル**: [.claude/agents/tdd-style-subagents/tdd-refactorer-blue.md](.claude/agents/tdd-style-subagents/tdd-refactorer-blue.md)
-
-- テストが通った状態で、コードの品質を向上
-- 早すぎる抽象化を避ける
-- 必要最小限のリファクタリングのみ実施
-
-
-
-### テスト用ヘルパー関数
-
-**ファイル**: [tests/frontend/helpers.py](tests/frontend/helpers.py)
-
-Streamlit AppTestを使った統合テストを簡単に記述するためのヘルパー関数を提供：
-
-- `create_streamlit_runner()`: Streamlitアプリの初期化とモック設定
-- `mock_backend_api()`: FastAPIバックエンドのモック化
-- `mock_azure_speech_result()`: Azure Speech Serviceのモック化
-
-**使用例**:
-```python
-def test_operator_button(mocker):
-    mocker.patch("requests.post", return_value=mock_backend_api())
-    at = create_streamlit_runner("src/frontend/app/pages/1_operator_app.py")
-    at.button[0].click().run()
-    assert "expected text" in at.text_area[0].value
-```
-
-### 使い方
-
-1. **新機能を実装する場合**:
-   ```
-   /tdd-integration を使って〇〇機能を実装してください
-   ```
-
-2. **各フェーズを個別に実行する場合**:
-   - RED: `tdd-test-writer` エージェントを起動
-   - GREEN: `tdd-implementer` エージェントを起動
-   - BLUE: `tdd-refactorer` エージェントを起動
-
-3. **テストヘルパーを使う場合**:
-   ```python
-   from tests.frontend.helpers import create_streamlit_runner, mock_backend_api
-   ```
-
-このテンプレートを使うことで、TDDの原則に従った堅牢な開発が可能になります。
