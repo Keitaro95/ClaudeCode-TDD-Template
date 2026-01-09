@@ -1,27 +1,72 @@
+---
+name: tdd-integration
+description: テスト駆動開発（TDD）のRed-Green-Refactorサイクルを統合テストで実施します。「実装」「機能追加」「新機能」などのキーワードで起動します。バグ修正やドキュメント作成では起動しません。
+---
 
-https://alexop.dev/posts/custom-tdd-workflow-claude-code-vue/#the-tdd-skill 
+# TDD 統合テスト
 
-このdescriptionフィールドにはトリガーフレーズが含まれている。
-新しいfeatureやfunctionを実装するように指示すると、クロードは自動的にこのスキルを起動します。
+専用のサブエージェントを使用して、厳格なテスト駆動開発のRed-Green-Refactorサイクルを実施します。
 
-```sh
-次の3つのphaseに従って新しい機能を実装してください。
-フェーズをスキップしないでください
-🔴 RED PHASE: Delegating to tdd-test-writer...
-Invoke the `tdd-test-writer` subagent with: tdd-test-writerサブエージェントを起動
+## 必須ワークフロー
 
-**Do NOT proceed to Green phase until test failure is confirmed.**
+すべての新機能は、この厳格な3フェーズサイクルに従う必要があります。フェーズをスキップしないでください。
 
-🟢 GREEN PHASE: Delegating to tdd-implementer...
-Invoke the `tdd-implementer` subagent with:　tdd-implementerサブエージェントを起動
+### フェーズ1: RED - 失敗するテストを書く
 
-**Do NOT proceed to Refactor phase until test passes.**
+🔴 REDフェーズ: tdd-test-writerに委任中...
 
-🔵 REFACTOR PHASE: Delegating to tdd-refactorer...
-Invoke the `tdd-refactorer` subagent with:　tdd-refactorerサブエージェントを起動
+`tdd-test-writer` サブエージェントを以下の情報で起動します:
+- ユーザーリクエストから得た機能要件
+- テスト対象の期待される動作
 
-**Cycle complete when refactor phase returns.**
-```
+サブエージェントは以下を返します:
+- テストファイルのパス
+- テストが失敗することを確認する出力
+- テストが検証する内容の要約
 
-各フェーズには「…まで先に進まないでください」という明確なゲートがある。
-🔴🟢🔵の絵文字のおかげで、出力で進捗状況を簡単に把握できます。
+**テストの失敗が確認されるまで、Greenフェーズに進まないでください。**
+
+### フェーズ2: GREEN - テストを通す
+
+🟢 GREENフェーズ: tdd-implementerに委任中...
+
+`tdd-implementer` サブエージェントを以下の情報で起動します:
+- REDフェーズで作成したテストファイルのパス
+- 機能要件のコンテキスト
+
+サブエージェントは以下を返します:
+- 変更されたファイル
+- テストが成功することを確認する出力
+- 実装の要約
+
+**テストが成功するまで、Refactorフェーズに進まないでください。**
+
+### フェーズ3: REFACTOR - 改善する
+
+🔵 REFACTORフェーズ: tdd-refactorerに委任中...
+
+`tdd-refactorer` サブエージェントを以下の情報で起動します:
+- テストファイルのパス
+- GREENフェーズで作成した実装ファイル
+
+サブエージェントは以下のいずれかを返します:
+- 変更内容 + テスト成功出力、または
+- 「リファクタリング不要」とその理由
+
+**Refactorフェーズが完了したらサイクル完了です。**
+
+## 複数機能の実装
+
+次の機能に進む前に、各機能の完全なサイクルを完了してください:
+
+機能1: 🔴 → 🟢 → 🔵 ✓
+機能2: 🔴 → 🟢 → 🔵 ✓
+機能3: 🔴 → 🟢 → 🔵 ✓
+
+## フェーズ違反
+
+以下を絶対に行わないでください:
+- テストより先に実装を書く
+- Redの失敗を確認せずにGreenに進む
+- Refactor評価をスキップする
+- 現在のサイクルを完了する前に新しい機能を開始する
