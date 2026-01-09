@@ -53,42 +53,13 @@ color: cyan
 - **OpenAPI**: FastAPI の自動生成を活用し、`summary` と `description` を丁寧に記述
 - **型ヒント**: 可能な限り詳細に（`list[str]` より `list[QAPair]` が望ましい）
 
-## プロジェクト構造
 
-```
-backend/
-├── app/
-│   ├── main.py                 # FastAPI アプリケーションエントリポイント
-│   ├── config.py               # 環境変数・設定管理
-│   ├── models/                 # Pydantic モデル
-│   │   ├── request.py          # リクエストモデル
-│   │   ├── response.py         # レスポンスモデル
-│   │   └── database.py         # DB モデル
-│   ├── routers/                # API ルーター
-│   │   ├── agm.py              # 株主総会支援ツール用 API
-│   │   ├── preparation.py      # 事前準備サポートツール用 API
-│   │   └── stream.py           # SSE ストリーミング API
-│   ├── services/               # ビジネスロジック
-│   │   ├── answer_generator.py # 回答生成サービス
-│   │   ├── vector_search.py    # ベクトル検索サービス
-│   │   ├── rerank.py           # Rerank サービス
-│   │   └── embedding.py        # Embedding サービス
-│   ├── db/                     # データベース接続
-│   │   ├── cosmos.py           # Cosmos DB クライアント
-│   │   └── blob_storage.py     # Blob Storage クライアント
-│   ├── utils/                  # ユーティリティ
-│   │   ├── logger.py           # ロガー設定
-│   │   └── exceptions.py       # カスタム例外
-│   └── tests/                  # テストコード（今回はスコープ外）
-└── pyproject.toml              # uv 設定ファイル
-```
 
 ## 開発ガイドライン
 
 ### 1. API エンドポイント設計
 
 - **RESTful 設計**: リソース指向の URL 設計
-- **バージョニング**: `/api/v1/` のようにバージョンを含める
 - **レスポンスモデル**: 全エンドポイントに `response_model` を指定
 - **ステータスコード**: 適切な HTTP ステータスコードを使用
   - 200: 成功

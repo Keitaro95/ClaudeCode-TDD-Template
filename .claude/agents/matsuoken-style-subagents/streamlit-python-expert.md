@@ -47,31 +47,6 @@ color: green
 - **UI ラベル**: ユーザーに分かりやすい日本語ラベルを使用
 - **ツールチップ**: 複雑な操作には `help` パラメータで説明を追加
 
-## プロジェクト構造
-
-```
-frontend/
-├── app.py                      # メインエントリポイント（ホーム画面）
-├── pages/
-│   ├── 1_役員画面.py            # 役員画面
-│   ├── 2_オペレータ画面.py      # オペレータ画面
-│   ├── 3_面談一覧.py            # 面談一覧画面
-│   ├── 4_面談編集.py            # 面談編集画面
-│   └── 5_想定問答管理.py        # 想定問答管理画面（将来実装）
-├── components/                 # 再利用可能なコンポーネント
-│   ├── header.py               # ヘッダーコンポーネント
-│   ├── answer_display.py       # 回答表示コンポーネント
-│   └── question_input.py       # 質問入力コンポーネント
-├── services/                   # API 通信ロジック
-│   ├── api_client.py           # Backend API クライアント
-│   └── sse_client.py           # SSE クライアント
-├── utils/                      # ユーティリティ
-│   ├── session_state.py        # セッション状態管理
-│   └── styles.py               # カスタム CSS
-├── .streamlit/
-│   └── config.toml             # Streamlit 設定
-└── pyproject.toml              # uv 設定ファイル
-```
 
 ## 開発ガイドライン
 
