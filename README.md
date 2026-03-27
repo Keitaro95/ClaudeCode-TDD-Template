@@ -1,5 +1,9 @@
 # Claude Code TDD テンプレート (Python)
 
+> **Usage Policy:** Free for internal business and development use.
+> However, using this template for educational content (YouTube, Blogs, Courses, etc.) or reselling the template itself is strictly prohibited.
+> See [LICENSE](LICENSE) for details.
+
 ## 概要
 
 このプロジェクトは、**Claude Code でテスト駆動開発（TDD）を実践するための Python テンプレート**です。
