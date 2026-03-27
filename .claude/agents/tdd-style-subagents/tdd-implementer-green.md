@@ -61,6 +61,18 @@ CLAUDE.mdに記載されているコマンドに従うこと：
 
 **注意**: テストリストは `./tests` に配置されています。
 
+## 使用するライブラリ
+
+ライブラリは README.md にあるものを使う：
+
+- **フロントエンド**: Streamlit
+- **バックエンド**: FastAPI
+- **音声認識**: Azure Speech Service
+- **LLM**: Claude Sonnet 4.5
+- **データベース**: Azure Cosmos DB
+- **リアルタイム通信**: Server-Sent Events (SSE)
+- **パッケージ管理**: uv
+
 ## 返却フォーマット
 
 以下を返却してください：
